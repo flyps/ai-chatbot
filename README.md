@@ -60,3 +60,43 @@ pnpm dev
 ```
 
 Your app template should now be running on [localhost:3000](http://localhost:3000).
+
+### Local Postgres and Redis with Docker
+
+If you'd rather not point at a hosted database, `docker-compose.yml` brings up the Postgres and
+Redis this app needs. Postgres is published on host port **5433** so it doesn't collide with an
+existing local Postgres on 5432.
+
+```bash
+docker compose up -d
+```
+
+Then put these in `.env.local` (it is gitignored):
+
+```bash
+AUTH_SECRET=any-random-string
+POSTGRES_URL=postgres://postgres:postgres@localhost:5433/ai_chatbot
+REDIS_URL=redis://localhost:6379
+```
+
+Apply the schema, then start the app:
+
+```bash
+pnpm db:migrate
+pnpm dev
+```
+
+`REDIS_URL` is optional — without it, resumable streams are disabled and everything else works.
+Add `XAI_API_KEY` to talk to a real model.
+
+### Running the tests
+
+The Playwright suite mocks the language models, so it needs only Postgres and `AUTH_SECRET` — no
+API key:
+
+```bash
+docker compose up -d
+pnpm db:migrate
+pnpm exec playwright install chromium
+pnpm test
+```
